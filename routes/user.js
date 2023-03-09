@@ -6,4 +6,7 @@ const router = express.Router()
 router.route('/')
   .post(userController.signup)
 
+router.route('/verifyemail/:token')
+  .put(userController.verifyEmail)
+
 export default router

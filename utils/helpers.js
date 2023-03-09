@@ -8,12 +8,24 @@ import sendEmail from './sendEmail.js'
 const frontend_root_url = envConfig.FRONTEND_ROOT_URL
 
 const isEmailTaken = async (email) => {
-  const user = await User.findUser({ email })
-  if(user) {
+  const user = await User.fetchUser({ email })
+  if(user && user.verified.email) {
     throw new ErrorResponse({ 
       statusCode: 409, 
-      message: 'Email already exists, if that is your email, please try to reset your password'
+      message: 'Email already exists'
     })
+  }
+}
+
+const checkSignupExpires = async (email) => {
+  const user = await User.fetchUser({ email })
+  if(user && !isTokenExpires(user.emailVerificationTokenExpires)) {
+    throw new ErrorResponse({
+      statusCode: 400,
+      message: 'Previous signup verification is pending, please check you email'
+    })
+  } else if(user) {
+    await User.removeUser(user._id)
   }
 }
 
@@ -37,11 +49,15 @@ const saveUserToDatabase = async ({ password, ...rest }) => {
   return await User.findUser({ _id: response.insertedId })
 }
 
+const hashToken = (token) => {
+  return crypto.createHash('sha256').update(token).digest('hex')
+}
 const generateToken = () => {
   const token = crypto.randomBytes(20).toString('hex')
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
+  const tokenHash = hashToken(token)
   const tokenExpires = Date.now() + 1000 * 60 * 60 * 12
 
+  console.log(token);
   return { token, tokenHash, tokenExpires }
 }
 
@@ -63,10 +79,43 @@ const sendEmailVerificationMail = async ({ email, token }) => {
   await sendEmailToUse({ email, subject, message })
 }
 
+const isUserExist = async (query) => {
+  const user = await User.fetchUser(query)
+  if(!user) {
+    throw new ErrorResponse({
+      statusCode: 404,
+      message: 'User does not exist'
+    })
+  } else {
+    return user
+  }
+}
+
+const isTokenExpires = (time) => {
+  const now = Date.now()
+  return now > time
+}
+
+const checkTokenExpiresAndUpdateVerifyInfo = async (user) => {
+  if(isTokenExpires(user.emailVerificationTokenExpires)) {
+    await User.removeUser(user._id)
+    throw new ErrorResponse({ statusCode: 400, message: 'Verification time expires, Please try to signup again.'})
+  }
+  const query = {
+    $set: { 'verified.email': true },
+    $unset: { emailVerificationTokenHash: '', emailVerificationTokenExpires: '' }
+  }
+  await User.updateUser(user._id, query)
+}
 
 export default {
   isEmailTaken,
+  isUserExist,
+  hashToken,
   generateToken,
+  isTokenExpires,
   saveUserToDatabase,
   sendEmailVerificationMail,
+  checkSignupExpires,
+  checkTokenExpiresAndUpdateVerifyInfo,
 }
