@@ -12,6 +12,7 @@ const BcryptSaltRounds = process.env.BcryptSaltRounds
 const EMAIL_FROM = process.env.EMAIL_FROM
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY
 const FRONTEND_ROOT_URL = process.env.FRONTEND_ROOT_URL
+const Email_Regexp = process.env.Email_Regexp
 
 export default {
   PORT,
@@ -22,4 +23,5 @@ export default {
   EMAIL_FROM,
   SENDGRID_API_KEY,
   FRONTEND_ROOT_URL,
+  Email_Regexp,
 }

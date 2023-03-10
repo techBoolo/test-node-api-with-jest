@@ -4,6 +4,9 @@ import ErrorResponse from '../utils/errorResponse.js'
 
 const signup = async (req, res) => {
   const { name, email, password } = req.body
+
+  // is the provided email and password correct
+  helpers.isEmailAndPasswordValid({ email, password })
   // check if email taken and verified
   await helpers.isEmailTaken(email)
 
@@ -13,7 +16,7 @@ const signup = async (req, res) => {
   // before saving the user we try to send a verification email, if we are
   // successful, we save the user in our db
   const { token, tokenHash, tokenExpires } =  await helpers.generateToken()
-//   await helpers.sendEmailVerificationMail({email, token}) 
+  await helpers.sendEmailVerificationMail({email, token}) 
   await helpers.saveUserToDatabase({ 
     name, 
     email, 

@@ -7,6 +7,39 @@ import sendEmail from './sendEmail.js'
 
 const frontend_root_url = envConfig.FRONTEND_ROOT_URL
 
+const emailRegex = new RegExp(envConfig.Email_Regexp)
+
+// check only if email matches the specified regexp
+const isEmailValid = (email) => {
+  return email.match(emailRegex)
+}
+// is email exists and satisfy the format
+const checkEmailValidity = ({ email }) => {
+  if(!email || !isEmailValid(email)){
+    throw new ErrorResponse({
+      statusCode: 400,
+      message: 'Please provide valid email'
+    })
+  }
+}
+
+// include password policy validity here
+const isPasswordValid = (password) => {
+  return password.length >= 3
+}
+const checkPasswordValidity = ({ password }) => {
+  if(!password || !isPasswordValid(password)) {
+    throw new ErrorResponse({
+      statusCode: 400,
+      message: 'password required, and must be atleast 3 characters long.'
+    })
+  }
+}
+const isEmailAndPasswordValid = ({ email, password }) => {
+  checkEmailValidity({ email })
+  checkPasswordValidity({ password })
+}
+
 const isEmailTaken = async (email) => {
   const user = await User.fetchUser({ email })
   if(user && user.verified.email) {
@@ -57,7 +90,6 @@ const generateToken = () => {
   const tokenHash = hashToken(token)
   const tokenExpires = Date.now() + 1000 * 60 * 60 * 12
 
-  console.log(token);
   return { token, tokenHash, tokenExpires }
 }
 
@@ -109,6 +141,7 @@ const checkTokenExpiresAndUpdateVerifyInfo = async (user) => {
 }
 
 export default {
+  isEmailAndPasswordValid,
   isEmailTaken,
   isUserExist,
   hashToken,
