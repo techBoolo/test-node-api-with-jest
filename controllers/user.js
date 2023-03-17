@@ -25,7 +25,7 @@ const signup = async (req, res) => {
     emailVerificationTokenExpires: tokenExpires
   })
 
-  res.status(200).json({ message: 'signup success'})
+  res.status(201).json({ message: 'signup success'})
 }
 
 const verifyEmail = async (req, res) => {

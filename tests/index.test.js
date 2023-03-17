@@ -18,9 +18,4 @@ describe('app basic initial tests', () => {
       .expect('Content-Type', /application\/json/)
   })
 
-  test('test for throwing and errorhandling in app, (to be deleted afterward)', async () => {
-    await api
-      .post('/')
-      .expect(500)
-  })
 })

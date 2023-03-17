@@ -3,7 +3,9 @@ import { MongoClient } from 'mongodb'
 
 let db
 const mongodbUrl = envConfig.MONGODB_URI
-const dbName = envConfig.DB_NAME
+const dbName = envConfig.NODE_ENV == 'test' 
+  ? envConfig.TEST_DB_NAME 
+  : envConfig.DB_NAME
 
 const mongoClient = new MongoClient(mongodbUrl)
 
