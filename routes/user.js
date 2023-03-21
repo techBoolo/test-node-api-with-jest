@@ -9,4 +9,7 @@ router.route('/')
 router.route('/verifyemail/:token')
   .put(userController.verifyEmail)
 
+router.route('/signin')
+  .post(userController.signin)
+
 export default router
