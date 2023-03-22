@@ -24,10 +24,20 @@ const checkEmailValidity = ({ email }) => {
   }
 }
 
+const checkPasswordPolicy = (password) => {
+  if(!password || password.length < 3) {
+    throw new ErrorResponse({
+      statusCode: 400,
+      message: 'password must exist and its length must be atlease 3 character long'
+    })
+  }
+}
+
 // include password policy validity here
 const isPasswordValid = (password) => {
   return password.length >= 3
 }
+
 const checkPasswordValidity = ({ password }) => {
   if(!password || !isPasswordValid(password)) {
     throw new ErrorResponse({
@@ -36,6 +46,7 @@ const checkPasswordValidity = ({ password }) => {
     })
   }
 }
+
 const isEmailAndPasswordValid = ({ email, password }) => {
   checkEmailValidity({ email })
   checkPasswordValidity({ password })
@@ -226,5 +237,7 @@ export default {
   checkRequestPending,
   sendPasswordResetEmail,
   sendEmailToUser,
+  checkPasswordPolicy,
+  createHash,
 }
 

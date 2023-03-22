@@ -11,5 +11,7 @@ router.route('/signin')
   .post(userController.signin)
 router.route('/forgotpassword')
   .post(userController.forgotPassword)
+router.route('/resetpassword/:token')
+  .put(userController.resetPassword)
 
 export default router

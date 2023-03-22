@@ -24,16 +24,21 @@ const removeUser = async (id) => {
   return await User.deleteOne({_id: id})
 }
 
+//const updateUser = async (user, query) => {
+//  const User = getDB().collection('users')
+// 
+//  return await User.updateOne(
+//    { _id: user._id }, 
+//    { 
+//      ...query,
+//      $currentDate: { updatedAt: true }
+//  })
+//}
 
-const updateUser = async (user, query) => {
+const updateUser = async (query, updateInfo) => {
   const User = getDB().collection('users')
- 
-  return await User.updateOne(
-    { _id: user._id }, 
-    { 
-      ...query,
-      $currentDate: { updatedAt: true }
-  })
+  
+  return await User.updateOne(query, updateInfo)
 }
 
 export default {
