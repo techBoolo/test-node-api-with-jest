@@ -8,7 +8,7 @@ const signup = async (req, res) => {
   // is the provided email and password correct
   helpers.isEmailAndPasswordValid({ email, password })
   // check if email taken and verified
-  await helpers.isEmailTaken(email)
+  const user = await helpers.isEmailTaken(email)
 
   // check if the user exists and the time is expires or not
   await helpers.checkSignupExpires(email)
@@ -16,7 +16,7 @@ const signup = async (req, res) => {
   // before saving the user we try to send a verification email, if we are
   // successful, we save the user in our db
   const { token, tokenHash, tokenExpires } =  await helpers.generateToken()
-  await helpers.sendEmailVerificationMail({email, token}) 
+ //  await helpers.sendEmailVerificationMail({user: { email }, token}) 
   await helpers.saveUserToDatabase({ 
     name, 
     email, 
@@ -62,8 +62,39 @@ const signin = async (req, res) => {
   })
 }
 
+const forgotPassword = async (req, res) => {
+  // get the email
+  const { email } = req.body
+  // find the email in the db
+  const user = await User.findUser({ email }) 
+  // if user does not exist throw an error
+  if(!user) {
+    throw new ErrorResponse({
+      statusCode: 404,
+      message: 'Account not found.'
+    })
+  }   
+  // check if previous request is not expired
+  helpers.checkRequestPending(user)
+
+  // generate the reset token and sent the reset link to user
+  const { token, tokenHash, tokenExpires } = helpers.generateToken()
+  await helpers.sendPasswordResetEmail({ email, token })
+
+  // update the user info on the db
+  await User.updateUser(user, { $set: {
+    passwordResetTokenHash: tokenHash,
+    passwordResetTokenExpires: tokenExpires
+  }})
+
+  res.status(200).json({
+    message: 'Password reset link sent, Please check your email' 
+  })
+}
+
 export default {
   signup,
   verifyEmail,
   signin,
+  forgotPassword
 }

@@ -49,6 +49,7 @@ const isEmailTaken = async (email) => {
       message: 'Email already exists'
     })
   }
+  return user
 }
 
 const checkSignupExpires = async (email) => {
@@ -83,9 +84,23 @@ const saveUserToDatabase = async ({ password, ...rest }) => {
   return await User.findUser({ _id: response.insertedId })
 }
 
+const checkRequestPending = (user) => {
+  if(Date.now() < user.passwordResetTokenExpires) {
+    throw new ErrorResponse({
+      statusCode: 400,
+      message: 'Please, check your email'
+    })
+  }
+}
+
 const hashToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex')
 }
+
+const createHash = (token) => {
+  return crypto.createHash('sha256').update(token).digest('hex')
+}
+
 const generateToken = () => {
   const token = crypto.randomBytes(20).toString('hex')
   const tokenHash = hashToken(token)
@@ -94,14 +109,14 @@ const generateToken = () => {
   return { token, tokenHash, tokenExpires }
 }
 
-const sendEmailToUse =  async ({ email, subject, message }) => {
-  const to = email
-  const from = envConfig.EMAIL_FROM
+const sendEmailToUser = async ({ user, subject, message }) => {
+  const to = user.email
+  const from = envConfig.Email_FROM
 
   await sendEmail({ to, from, subject, message })
 }
 
-const sendEmailVerificationMail = async ({ email, token }) => {
+const sendEmailVerificationMail = async ({ user, token }) => {
   const subject = 'Verify Email'
   const url = `${frontend_root_url}/users/verifyemail/${token}`
   const message = `
@@ -109,7 +124,7 @@ const sendEmailVerificationMail = async ({ email, token }) => {
     <p>click the following link to verify your email.</p>
     <a href=${url}>${url}</a>
   `
-  await sendEmailToUse({ email, subject, message })
+  await sendEmailToUser({ user, subject, message })
 }
 
 const isUserExist = async (query) => {
@@ -138,7 +153,7 @@ const checkTokenExpiresAndUpdateVerifyInfo = async (user) => {
     $set: { 'verified.email': true },
     $unset: { emailVerificationTokenHash: '', emailVerificationTokenExpires: '' }
   }
-  await User.updateUser(user._id, query)
+  await User.updateUser(user, query)
 }
 
 const isAccountExists = async (query) => {
@@ -181,6 +196,18 @@ const generateJWToken = async (payload) => {
   ) 
 }
 
+const sendPasswordResetEmail = async (user, token) => {
+  const url = `${frontend_root_url}/users/resetpassword/${token}`
+  const subject = 'Reset password'
+  const message = `
+    <h4>Reset password</h4>
+    <p>follow the following link to reeset your password</p>
+    <a href=${url}>${url}</a>
+  `
+
+  await sendEmailToUser({user, subject, message })
+}
+
 export default {
   checkAccountExists,
   comparePassword,
@@ -196,5 +223,8 @@ export default {
   sendEmailVerificationMail,
   checkSignupExpires,
   checkTokenExpiresAndUpdateVerifyInfo,
+  checkRequestPending,
+  sendPasswordResetEmail,
+  sendEmailToUser,
 }
 

@@ -1,15 +1,11 @@
 import { getDB } from '../config/db.js'
 import ErrorResponse from '../utils/errorResponse.js'
 
-// @return doc / null
 const findUser = async (query) => {
   const User = getDB().collection('users')
-  return await User.findOne(
-    query, 
-    { projection: { name: 1, email: 1, contact: 1 }}
-  )
-}
 
+  return await User.findOne(query)
+}
 // @ use this for data access in the controller, not for data to be sent to the
 // user
 const fetchUser = async (query) => {
@@ -28,9 +24,16 @@ const removeUser = async (id) => {
   return await User.deleteOne({_id: id})
 }
 
-const updateUser = async (id, query) => {
+
+const updateUser = async (user, query) => {
   const User = getDB().collection('users')
-  return await User.updateOne({ _id: id }, query)
+ 
+  return await User.updateOne(
+    { _id: user._id }, 
+    { 
+      ...query,
+      $currentDate: { updatedAt: true }
+  })
 }
 
 export default {
@@ -40,5 +43,4 @@ export default {
   removeUser,
   updateUser,
 }
-
 
